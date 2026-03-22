@@ -68,21 +68,29 @@ python3 -m pip install --break-system-packages \
   python-dotenv \
   pydantic
 
+# --- llmfit (right-size LLMs to your hardware) ---
+echo "[5/10] llmfit..."
+if ! command -v llmfit &>/dev/null; then
+  curl -fsSL https://llmfit.axjns.dev/install.sh | sh -s -- --local
+  grep -q '.local/bin' ~/.bashrc || echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
 # --- Ollama ---
-echo "[5/8] Ollama..."
+echo "[6/10] Ollama..."
 if ! command -v ollama &>/dev/null; then
   curl -fsSL https://ollama.com/install.sh | sh
 fi
 
 # --- Docker ---
-echo "[6/8] Docker..."
+echo "[7/10] Docker..."
 if ! command -v docker &>/dev/null; then
   curl -fsSL https://get.docker.com | sh
   sudo usermod -aG docker $USER
 fi
 
 # --- NVIDIA Container Toolkit (GPU in Docker) ---
-echo "[7/8] NVIDIA Container Toolkit..."
+echo "[8/10] NVIDIA Container Toolkit..."
 if ! command -v nvidia-ctk &>/dev/null; then
   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
     sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
@@ -96,7 +104,7 @@ if ! command -v nvidia-ctk &>/dev/null; then
 fi
 
 # --- Haishare GPU scheduler fix (for cloud GPU pods) ---
-echo "[8/9] GPU environment fix..."
+echo "[9/10] GPU environment fix..."
 if [ -d /var/run/haishare ]; then
   echo "  Detected haishare GPU scheduler — applying env fixes"
   grep -q 'HAISHARE_SCHEDULER_DIR' ~/.bashrc 2>/dev/null || cat >> ~/.bashrc << 'HAISHARE'
@@ -108,7 +116,7 @@ HAISHARE
 fi
 
 # --- Convenience aliases ---
-echo "[9/9] Shell config..."
+echo "[10/10] Shell config..."
 cat >> ~/.bashrc << 'ALIASES'
 
 # --- AI Dev Aliases ---
@@ -127,6 +135,7 @@ echo ""
 echo "Installed:"
 echo "  - Node.js $(node --version) + Claude Code"
 echo "  - Python $(python3 --version 2>&1 | awk '{print $2}') + PyTorch + HuggingFace + vLLM"
+echo "  - llmfit (run: llmfit recommend)"
 echo "  - Ollama (run: ollama serve & ollama pull llama3)"
 echo "  - Docker + NVIDIA Container Toolkit"
 echo "  - JupyterLab (run: jl)"
