@@ -31,8 +31,9 @@ echo "[4/8] Python ML environment..."
 sudo apt-get install -y -qq python3-pip python3-venv
 python3 -m pip install --upgrade pip --break-system-packages
 
-python3 -m pip install --break-system-packages \
-  torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+# Use nightly for Blackwell (sm_120) support; cu128 required for driver 580+
+python3 -m pip install --break-system-packages --pre \
+  torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu128
 
 python3 -m pip install --break-system-packages \
   transformers \
@@ -94,8 +95,20 @@ if ! command -v nvidia-ctk &>/dev/null; then
   sudo systemctl restart docker 2>/dev/null || true
 fi
 
+# --- Haishare GPU scheduler fix (for cloud GPU pods) ---
+echo "[8/9] GPU environment fix..."
+if [ -d /var/run/haishare ]; then
+  echo "  Detected haishare GPU scheduler — applying env fixes"
+  grep -q 'HAISHARE_SCHEDULER_DIR' ~/.bashrc 2>/dev/null || cat >> ~/.bashrc << 'HAISHARE'
+
+# --- GPU Environment Fix (haishare/cloud GPU pods) ---
+export HAISHARE_SCHEDULER_DIR=/var/run/haishare/gpu0
+export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+HAISHARE
+fi
+
 # --- Convenience aliases ---
-echo "[8/8] Shell config..."
+echo "[9/9] Shell config..."
 cat >> ~/.bashrc << 'ALIASES'
 
 # --- AI Dev Aliases ---
